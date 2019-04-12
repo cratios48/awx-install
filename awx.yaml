@@ -1,0 +1,72 @@
+---
+- hosts: all
+  become: true
+  become_method: sudo
+  vars:
+    nodejs_rpm_url: "https://rpm.nodesource.com/pub_8.x/el/7/x86_64/nodesource-release-el7-1.noarch.rpm"
+
+
+  tasks:
+    - name: Remove centos's docker package
+      yum:
+        name:
+          - docker
+          - docker-client
+          - docker-client-latest
+          - docker-common
+          - docker-latest
+          - docker-latest-logrotate
+          - docker-logrotate
+          - docker-engine
+        state: absent
+      
+    - name: Register Docker repo
+      get_url:
+        url: https://download.docker.com/linux/centos/docker-ce.repo
+        dest: /etc/yum.repos.d/
+        owner: root
+        group: root
+        mode: 644
+
+    - name: Install Docker CE and dependencies
+      yum:
+        name:
+          - yum-utils
+          - device-mapper-persistent-data
+          - lvm2
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: latest
+    
+    - name: Start and enable Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+    
+    - name: Install docker python module
+      pip:
+        name: docker-compose
+
+    - name: Install Git and GNU Make
+      yum:
+        name:
+          - git
+          - "@Development tools"
+        state: latest
+
+    - name: Register EPEL repository
+      yum:
+        name: epel-release
+        state: latest
+
+    - name: Register Nodejs repo
+      yum:
+        name: "{{ nodejs_rpm_url }}"
+        state: present
+
+    - name: Install Nodejs and NPM
+      yum:
+        name: nodejs
+        state: latest
